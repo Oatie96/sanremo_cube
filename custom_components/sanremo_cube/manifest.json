@@ -1,11 +1,11 @@
 {
   "domain": "sanremo_cube",
   "name": "Sanremo Cube",
-  "codeowners": ["@christian"],
+  "codeowners": ["@Oatie96"],
   "config_flow": true,
-  "documentation": "https://github.com/YOUR_GITHUB_USERNAME/ha-sanremo-cube",
-  "issue_tracker": "https://github.com/YOUR_GITHUB_USERNAME/ha-sanremo-cube/issues",
+  "documentation": "https://github.com/Oatie96/sanremo_cube",
+  "issue_tracker": "https://github.com/Oatie96/sanremo_cube/issues",
   "iot_class": "local_polling",
   "requirements": ["async-timeout>=4.0.0"],
-  "version": "0.1.0"
+  "version": "0.1.1"
 }
