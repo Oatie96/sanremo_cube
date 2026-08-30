@@ -1,0 +1,52 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to your Sanremo Cube",
+        "data": {
+          "host": "Host or IP address",
+          "pin": "PIN (only if the panel requires login)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not reach the machine at that address."
+    },
+    "abort": {
+      "already_configured": "This machine is already configured."
+    }
+  },
+  "entity": {
+    "switch": {
+      "power": { "name": "Power" },
+      "eco_mode": { "name": "Eco mode" },
+      "steam_booster": { "name": "Steam booster" },
+      "scheduler": { "name": "Scheduler" },
+      "scheduler_day": { "name": "Scheduler {day}" }
+    },
+    "sensor": {
+      "boiler_temperature": { "name": "Boiler temperature" },
+      "boiler_setpoint": { "name": "Boiler setpoint" },
+      "shot_time": { "name": "Shot time" },
+      "filter_days_remaining": { "name": "Filter days remaining" },
+      "coffees_today": { "name": "Coffees today" },
+      "coffees_week": { "name": "Coffees this week" },
+      "coffees_month": { "name": "Coffees this month" },
+      "coffees_total": { "name": "Coffees total" },
+      "total_water_erogated": { "name": "Total water erogated" }
+    },
+    "binary_sensor": {
+      "tank_ok": { "name": "Tank empty" },
+      "ready": { "name": "Ready" },
+      "steam_booster_heating": { "name": "Steam booster heating" },
+      "alarm_active": { "name": "Alarm active" },
+      "need_change_filters": { "name": "Filter change needed" },
+      "boiler_fault": { "name": "Boiler fault" }
+    },
+    "number": {
+      "boiler_setpoint": { "name": "Boiler setpoint" },
+      "eco_boiler_setpoint": { "name": "Eco boiler setpoint" },
+      "eco_timer": { "name": "Eco mode timer" }
+    }
+  }
+}

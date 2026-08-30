@@ -1,0 +1,61 @@
+set_schedule:
+  name: Set schedule
+  description: >-
+    Save the weekly-programming time windows for one day on a Sanremo Cube,
+    same as the panel's "Programming" screen. Up to three on/off windows per
+    day; optionally copy the same windows onto other weekdays in one call.
+  fields:
+    config_entry_id:
+      name: Cube
+      description: The config entry ID of the Sanremo Cube to control.
+      required: true
+      selector:
+        config_entry:
+          integration: sanremo_cube
+    day:
+      name: Day
+      description: Weekday to edit.
+      required: true
+      selector:
+        select:
+          options:
+            - sunday
+            - monday
+            - tuesday
+            - wednesday
+            - thursday
+            - friday
+            - saturday
+    slot1:
+      name: Slot 1
+      description: First on/off window for the day.
+      required: false
+      selector:
+        object:
+    slot2:
+      name: Slot 2
+      description: Second on/off window for the day.
+      required: false
+      selector:
+        object:
+    slot3:
+      name: Slot 3
+      description: Third on/off window for the day.
+      required: false
+      selector:
+        object:
+    copy_to:
+      name: Copy to days
+      description: Also apply this same schedule to these other weekdays.
+      required: false
+      selector:
+        select:
+          multiple: true
+          options:
+            - sunday
+            - monday
+            - tuesday
+            - wednesday
+            - thursday
+            - friday
+            - saturday
