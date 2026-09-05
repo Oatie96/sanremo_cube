@@ -1,0 +1,10 @@
+# Local Python environments and test artefacts
+.venv/
+.pytest_cache/
+__pycache__/
+*.py[cod]
+
+# Local Home Assistant state and customer/machine data
+.config/
+*.sqlite
+*.db
