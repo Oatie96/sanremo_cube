@@ -21,6 +21,7 @@ PLATFORMS: list[Platform] = [
     Platform.SENSOR,
     Platform.NUMBER,
     Platform.BINARY_SENSOR,
+    Platform.CALENDAR,
 ]
 
 SERVICE_SET_SCHEDULE = "set_schedule"

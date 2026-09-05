@@ -36,3 +36,27 @@ def test_parse_state_reads_each_value_from_its_confirmed_register_block() -> Non
     assert state.scheduler_day_enabled["monday"] is True
     assert state.eco_timer_seconds == 1800
     assert state.eco_boiler_setpoint == 95.0
+
+
+def test_parse_state_preserves_physical_scheduler_slot_positions() -> None:
+    """Inactive slots must remain identifiable for safe calendar edits."""
+    state = parse_state(
+        {
+            "readwrite_registers": {
+                18: 1,
+                19: (7 * 4 << 8) | (8 * 4),
+                20: 7,
+                21: 0,
+                22: 1,
+                23: (17 * 4 << 8) | (18 * 4),
+            }
+        }
+    )
+
+    monday = state.scheduler_slots["monday"]
+    assert len(monday) == 3
+    assert monday[0].index == 0
+    assert monday[0].on_hour == 7
+    assert monday[0].off_hour == 8
+    assert monday[1] is None
+    assert monday[2].index == 2
