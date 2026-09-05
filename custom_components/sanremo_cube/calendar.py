@@ -25,7 +25,7 @@ class CubeScheduleCalendar(CalendarEntity):
     """Expose the Cube's seven-day, three-slot schedule as a native calendar."""
 
     _attr_has_entity_name = True
-    _attr_name = "Weekly schedule"
+    _attr_name = "Standby schedule"
     _attr_translation_key = "weekly_schedule"
     _attr_supported_features = (
         CalendarEntityFeature.CREATE_EVENT | CalendarEntityFeature.UPDATE_EVENT | CalendarEntityFeature.DELETE_EVENT
@@ -46,7 +46,7 @@ class CubeScheduleCalendar(CalendarEntity):
                 continue
             start = datetime.combine(date, time(slot.on_hour, slot.on_minute), tzinfo=tzinfo)
             end = datetime.combine(date, time(slot.off_hour, slot.off_minute), tzinfo=tzinfo)
-            events.append(CalendarEvent(start=start, end=end, summary="Sanremo Cube", uid=self._uid(day, slot.index), rrule=f"FREQ=WEEKLY;BYDAY={_BYDAY[date.weekday()]}"))
+            events.append(CalendarEvent(start=start, end=end, summary="Sanremo Cube standby", description="Standby window: machine off at start, on at end.", uid=self._uid(day, slot.index), rrule=f"FREQ=WEEKLY;BYDAY={_BYDAY[date.weekday()]}"))
         return events
 
     @property
