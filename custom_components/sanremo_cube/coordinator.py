@@ -130,9 +130,9 @@ def parse_state(raw: dict) -> CubeState:
         state.tank_ok = _bit(status1, STATUS_BIT_TANK_LEVEL_OK)
         state.ready = _bit(status1, STATUS_BIT_READY)
         state.steam_booster_heating = _bit(status1, STATUS_BIT_STEAM_BOOSTER_HEATING)
-        # Live test: the Cube sets this flag after the documented power-on
-        # command (id 12). Ready is deliberately independent while warming.
-        state.power_on = _bit(status1, STATUS_BIT_ENERGY_SAVING)
+        # User-verified on the physical machine: this flag is set in standby.
+        # Ready is deliberately independent while the boiler warms up.
+        state.power_on = not _bit(status1, STATUS_BIT_ENERGY_SAVING)
 
     if REG_MACHINE_ALARM_STATUS_1 in readonly_regs:
         state.alarm_bits = int(readonly_regs[REG_MACHINE_ALARM_STATUS_1])

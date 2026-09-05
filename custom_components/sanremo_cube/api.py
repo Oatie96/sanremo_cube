@@ -146,10 +146,12 @@ class CubeClient:
         await self._post(REQ_SET_VALUE, {"id": value_id, "value": value})
 
     async def async_power_on(self) -> None:
-        await self.async_set_value(ID_POWER_ON, 1)
+        # User-verified on the physical machine: Cube command 11 powers on.
+        await self.async_set_value(ID_STANDBY_ON, 1)
 
     async def async_standby(self) -> None:
-        await self.async_set_value(ID_STANDBY_ON, 1)
+        # Cube command 12 enters standby (despite its legacy constant name).
+        await self.async_set_value(ID_POWER_ON, 1)
 
     async def async_set_eco_mode(self, on: bool) -> None:
         await self.async_set_value(ID_ECO_MODE, 1 if on else 0)

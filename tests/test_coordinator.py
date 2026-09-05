@@ -12,7 +12,7 @@ def test_parse_state_reads_each_value_from_its_confirmed_register_block() -> Non
                 0: 122,
                 9: 27,
                 10: 4,
-                12: 48,
+                12: 32,
                 14: 0,
                 21: 10,
             },
@@ -39,10 +39,10 @@ def test_parse_state_reads_each_value_from_its_confirmed_register_block() -> Non
     assert state.eco_boiler_setpoint == 95.0
 
 
-def test_parse_state_marks_energy_saving_flag_as_power_on() -> None:
-    """Live test: the Cube sets this bit after the power-on command (id 12)."""
-    assert parse_state({"readonly_registers": {12: 16}}).power_on is True
-    assert parse_state({"readonly_registers": {12: 0}}).power_on is False
+def test_parse_state_marks_energy_saving_flag_as_standby() -> None:
+    """User-verified: this flag is set while the Cube is in standby."""
+    assert parse_state({"readonly_registers": {12: 16}}).power_on is False
+    assert parse_state({"readonly_registers": {12: 0}}).power_on is True
 
 
 def test_parse_state_preserves_physical_scheduler_slot_positions() -> None:
