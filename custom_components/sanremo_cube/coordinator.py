@@ -40,6 +40,7 @@ from .const import (
     SETUP_BIT_ECO_ENABLED,
     SETUP_BIT_SCHEDULER_ENABLED,
     SETUP_BIT_STEAM_BOOSTER_ENABLED,
+    STATUS_BIT_ENERGY_SAVING,
     STATUS_BIT_READY,
     STATUS_BIT_STEAM_BOOSTER_HEATING,
     STATUS_BIT_TANK_LEVEL_OK,
@@ -129,9 +130,9 @@ def parse_state(raw: dict) -> CubeState:
         state.tank_ok = _bit(status1, STATUS_BIT_TANK_LEVEL_OK)
         state.ready = _bit(status1, STATUS_BIT_READY)
         state.steam_booster_heating = _bit(status1, STATUS_BIT_STEAM_BOOSTER_HEATING)
-        # Best-effort: no dedicated "standby" bit was confirmed in the reversed
-        # code, so power state is inferred from Ready until verified otherwise.
-        state.power_on = state.ready
+        # Ready only means the boiler reached temperature. The dedicated
+        # EnergySaving bit is the machine's actual standby/power indicator.
+        state.power_on = not _bit(status1, STATUS_BIT_ENERGY_SAVING)
 
     if REG_MACHINE_ALARM_STATUS_1 in readonly_regs:
         state.alarm_bits = int(readonly_regs[REG_MACHINE_ALARM_STATUS_1])

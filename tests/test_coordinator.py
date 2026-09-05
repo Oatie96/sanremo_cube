@@ -12,7 +12,7 @@ def test_parse_state_reads_each_value_from_its_confirmed_register_block() -> Non
                 0: 122,
                 9: 27,
                 10: 4,
-                12: 115,
+                12: 32,
                 14: 0,
                 21: 10,
             },
@@ -31,11 +31,17 @@ def test_parse_state_reads_each_value_from_its_confirmed_register_block() -> Non
     assert state.shot_time_seconds == 2.7
     assert state.filter_days_remaining == 4
     assert state.ready is True
+    assert state.power_on is True
     assert state.eco_mode_enabled is True
     assert state.steam_booster_enabled is True
     assert state.scheduler_day_enabled["monday"] is True
     assert state.eco_timer_seconds == 1800
     assert state.eco_boiler_setpoint == 95.0
+
+
+def test_parse_state_marks_non_energy_saving_warmup_as_power_on() -> None:
+    """A Cube can be powered on while warming, so Ready is not a power flag."""
+    assert parse_state({"readonly_registers": {12: 0}}).power_on is True
 
 
 def test_parse_state_preserves_physical_scheduler_slot_positions() -> None:
