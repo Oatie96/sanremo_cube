@@ -51,6 +51,9 @@ _LOGGER = logging.getLogger(__name__)
 
 @dataclass
 class SchedulerSlot:
+    """One physical scheduler slot in the Cube's daily three-slot table."""
+
+    index: int
     enabled: bool
     on_hour: int
     on_minute: int
@@ -89,7 +92,7 @@ class CubeState:
     ml_total: int | None = None
 
     scheduler_day_enabled: dict[str, bool] = field(default_factory=dict)
-    scheduler_slots: dict[str, list[SchedulerSlot]] = field(default_factory=dict)
+    scheduler_slots: dict[str, list[SchedulerSlot | None]] = field(default_factory=dict)
 
 
 def _bit(value: int, position: int) -> bool:
@@ -160,29 +163,31 @@ def parse_state(raw: dict) -> CubeState:
         for i, name in enumerate(WEEKDAYS):
             state.scheduler_day_enabled[name] = _bit(day_mask, i)
 
-    # 21 slots = 7 days * 3 slots, stored as consecutive register pairs from 18.
+    # Keep all three physical positions per day. Calendar edits need stable
+    # hardware-slot indexes so deleting one window cannot shift another.
     u = REG_SCHEDULER_TABLE_START
-    per_day: dict[str, list[SchedulerSlot]] = {name: [] for name in WEEKDAYS}
+    per_day: dict[str, list[SchedulerSlot | None]] = {
+        name: [None] * 3 for name in WEEKDAYS
+    }
     for i in range(SCHEDULER_SLOT_COUNT):
         day_tag = readwrite_regs.get(u)
         time_reg = readwrite_regs.get(u + 1)
         u += 2
-        day_index = i // 3
-        # The panel's own UI order for these 21 slots is Monday-first (button 1..7);
-        # map slot index -> weekday assuming Monday(0)..Sunday(6) UI ordering.
+        day_index, slot_index = divmod(i, 3)
+        # The panel's own UI order for these 21 slots is Monday-first.
         weekday_name = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"][day_index]
         if day_tag is None or time_reg is None or day_tag == 7:
             continue  # 7 is the "no slot" sentinel used by the panel
         time_on = (time_reg >> 8) & 255
         time_off = time_reg & 255
-        slot = SchedulerSlot(
+        per_day[weekday_name][slot_index] = SchedulerSlot(
+            index=slot_index,
             enabled=True,
             on_hour=time_on // 4,
             on_minute=(time_on % 4) * 15,
             off_hour=time_off // 4,
             off_minute=(time_off % 4) * 15,
         )
-        per_day[weekday_name].append(slot)
     state.scheduler_slots = per_day
 
     return state

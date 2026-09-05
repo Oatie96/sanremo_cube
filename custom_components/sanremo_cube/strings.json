@@ -47,6 +47,9 @@
       "boiler_setpoint": { "name": "Boiler setpoint" },
       "eco_boiler_setpoint": { "name": "Eco boiler setpoint" },
       "eco_timer": { "name": "Eco mode timer" }
+    },
+    "calendar": {
+      "weekly_schedule": { "name": "Weekly schedule" }
     }
   }
 }
