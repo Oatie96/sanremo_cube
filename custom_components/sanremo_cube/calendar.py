@@ -27,7 +27,7 @@ class CubeScheduleCalendar(CalendarEntity):
     """Expose the Cube's seven-day, three-slot schedule as a native calendar."""
 
     _attr_has_entity_name = True
-    _attr_name = "Weekly schedule"
+    _attr_name = "Sanremo Cube"
     _attr_translation_key = "weekly_schedule"
     _attr_supported_features = (
         CalendarEntityFeature.CREATE_EVENT | CalendarEntityFeature.UPDATE_EVENT | CalendarEntityFeature.DELETE_EVENT
