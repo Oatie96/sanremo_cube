@@ -11,7 +11,7 @@ from custom_components.sanremo_cube.coordinator import CubeState, SchedulerSlot
 
 class _Coordinator:
     def __init__(self) -> None:
-        self.entry = type("Entry", (), {"entry_id": "entry-1"})()
+        self.entry = type("Entry", (), {"entry_id": "entry-1", "data": {"host": "cube.local"}, "title": "Cube"})()
         self.data = CubeState(
             scheduler_slots={
                 "monday": [SchedulerSlot(0, True, 7, 0, 8, 30), None, None],
