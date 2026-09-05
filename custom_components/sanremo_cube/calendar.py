@@ -7,6 +7,8 @@ from homeassistant.components.calendar import CalendarEntity, CalendarEvent
 from homeassistant.components.calendar.const import CalendarEntityFeature
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.const import CONF_HOST
+from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import dt as dt_util
 
@@ -25,7 +27,7 @@ class CubeScheduleCalendar(CalendarEntity):
     """Expose the Cube's seven-day, three-slot schedule as a native calendar."""
 
     _attr_has_entity_name = True
-    _attr_name = "Weekly schedule"
+    _attr_name = "Sanremo Cube"
     _attr_translation_key = "weekly_schedule"
     _attr_supported_features = (
         CalendarEntityFeature.CREATE_EVENT | CalendarEntityFeature.UPDATE_EVENT | CalendarEntityFeature.DELETE_EVENT
@@ -34,6 +36,14 @@ class CubeScheduleCalendar(CalendarEntity):
     def __init__(self, coordinator: CubeDataUpdateCoordinator) -> None:
         self.coordinator = coordinator
         self._attr_unique_id = f"{coordinator.entry.entry_id}_weekly_schedule"
+        host = coordinator.entry.data[CONF_HOST]
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, coordinator.entry.entry_id)},
+            name=coordinator.entry.title,
+            manufacturer="Sanremo (Net Software Srl — Cube controller)",
+            model="Cube",
+            configuration_url=f"http://{host}/cube.html",
+        )
 
     def _uid(self, day: str, index: int) -> str:
         return f"{self.coordinator.entry.entry_id}:{day}:{index}"
