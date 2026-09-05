@@ -66,25 +66,18 @@ class CubeClient:
 
     async def _post(self, req_code: str, data: dict[str, Any] | None) -> Any:
         """POST one reqCode/data pair and return the decoded payload."""
-        body = {
-            "key": "",
-            "mac": "",
-            "reqCode": req_code,
-            "data": json.dumps(data) if data is not None else "null",
-        }
+        body: dict[str, Any] = {"key": req_code}
+        if data:
+            body.update(data)
         try:
             async with async_timeout.timeout(DEFAULT_TIMEOUT):
-                async with self._session.post(
-                    self.base_url,
-                    json=body,
-                    headers={"Content-Type": "application/json; charset=utf-8"},
-                ) as resp:
+                async with self._session.post(self.base_url, data=body) as resp:
                     resp.raise_for_status()
                     envelope = await resp.json(content_type=None)
         except (aiohttp.ClientError, TimeoutError) as err:
             raise CubeApiError(f"Error talking to {self._host}: {err}") from err
 
-        raw = envelope.get("d") if isinstance(envelope, dict) else envelope
+        raw = envelope.get("d") if isinstance(envelope, dict) and "d" in envelope else envelope
         if raw is None:
             return None
         try:
@@ -110,13 +103,19 @@ class CubeClient:
         self._logged_in = True
 
     async def async_get_state(self) -> dict[str, Any]:
-        """Fetch the three parameter blocks the panel itself polls and merge them.
+        """Fetch the three parameter blocks the panel itself polls.
 
-        Each returns a `registers` array of [index, value] pairs (plus a few
-        top-level fields such as rssi / use24H on the system-parameters call).
+        Register indexes are local to a response block: the read-only (151)
+        and read-write (152) blocks both start at register 0. Keep them
+        separate so a value from one block can never overwrite another.
         """
         await self.async_ensure_login()
         merged: dict[str, Any] = {}
+        register_blocks = {
+            REQ_GET_SYSTEM_PARAMETERS: "system_registers",
+            REQ_GET_READONLY_PARAMETERS: "readonly_registers",
+            REQ_GET_READWRITE_PARAMETERS: "readwrite_registers",
+        }
         for req_code in (
             REQ_GET_SYSTEM_PARAMETERS,
             REQ_GET_READONLY_PARAMETERS,
@@ -127,13 +126,14 @@ class CubeClient:
                 continue
             registers = result.get("registers")
             if registers:
-                reg_map: dict[int, int] = merged.setdefault("registers", {})
+                reg_map: dict[int, int] = {}
                 for entry in registers:
                     try:
                         idx, val = entry[0], entry[1]
                     except (IndexError, TypeError):
                         continue
                     reg_map[int(idx)] = val
+                merged[register_blocks[req_code]] = reg_map
             for key, val in result.items():
                 if key != "registers":
                     merged[key] = val

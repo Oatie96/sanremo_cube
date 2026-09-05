@@ -7,7 +7,8 @@ CONF_PIN = "pin"
 DEFAULT_SCAN_INTERVAL = 15  # seconds
 DEFAULT_TIMEOUT = 8  # seconds
 
-ENDPOINT = "/default.aspx/PostAction"
+# Confirmed from the live Cube web panel: form-encoded POSTs to /ajax/post.
+ENDPOINT = "/ajax/post"
 
 # --- reqCode values (from cube.js) ---
 REQ_LOGIN = "100"
@@ -50,7 +51,7 @@ REG_RTC_HOUR = 3
 REG_RTC_DAY = 4
 REG_RTC_MONTH = 5
 REG_RTC_YEAR = 6
-REG_SETPOINT_BOILER_TEMPERATURE_X10 = 8
+REG_SETPOINT_BOILER_TEMPERATURE_X10 = 0
 REG_EROGATION_COFFEE_TIME_X10 = 9
 REG_REMAIN_DAYS_TO_FILTER = 10
 REG_MACHINE_STATUS_1 = 12

@@ -104,23 +104,24 @@ def _u32(low: int | None, high: int | None) -> int | None:
 
 def parse_state(raw: dict) -> CubeState:
     """Turn the raw merged register map into a CubeState."""
-    regs: dict[int, int] = raw.get("registers", {})
+    readonly_regs: dict[int, int] = raw.get("readonly_registers", raw.get("registers", {}))
+    readwrite_regs: dict[int, int] = raw.get("readwrite_registers", {})
     state = CubeState()
 
-    if REG_BOILER_TEMPERATURE in regs:
-        state.boiler_temperature = float(regs[REG_BOILER_TEMPERATURE])
-    if REG_SETPOINT_BOILER_TEMPERATURE_X10 in regs:
-        state.boiler_setpoint = regs[REG_SETPOINT_BOILER_TEMPERATURE_X10] / 10
-    if REG_ECO_BOILER_SETPOINT_X10 in regs:
-        state.eco_boiler_setpoint = regs[REG_ECO_BOILER_SETPOINT_X10] / 10
-    if REG_ECO_TIMER_SECONDS in regs:
-        state.eco_timer_seconds = regs[REG_ECO_TIMER_SECONDS]
-    if REG_EROGATION_COFFEE_TIME_X10 in regs:
-        state.shot_time_seconds = regs[REG_EROGATION_COFFEE_TIME_X10] / 10
-    if REG_REMAIN_DAYS_TO_FILTER in regs:
-        state.filter_days_remaining = regs[REG_REMAIN_DAYS_TO_FILTER]
+    if REG_BOILER_TEMPERATURE in readonly_regs:
+        state.boiler_temperature = float(readonly_regs[REG_BOILER_TEMPERATURE])
+    if REG_SETPOINT_BOILER_TEMPERATURE_X10 in readwrite_regs:
+        state.boiler_setpoint = readwrite_regs[REG_SETPOINT_BOILER_TEMPERATURE_X10] / 10
+    if REG_ECO_BOILER_SETPOINT_X10 in readwrite_regs:
+        state.eco_boiler_setpoint = readwrite_regs[REG_ECO_BOILER_SETPOINT_X10] / 10
+    if REG_ECO_TIMER_SECONDS in readwrite_regs:
+        state.eco_timer_seconds = readwrite_regs[REG_ECO_TIMER_SECONDS]
+    if REG_EROGATION_COFFEE_TIME_X10 in readonly_regs:
+        state.shot_time_seconds = readonly_regs[REG_EROGATION_COFFEE_TIME_X10] / 10
+    if REG_REMAIN_DAYS_TO_FILTER in readonly_regs:
+        state.filter_days_remaining = readonly_regs[REG_REMAIN_DAYS_TO_FILTER]
 
-    status1 = regs.get(REG_MACHINE_STATUS_1)
+    status1 = readonly_regs.get(REG_MACHINE_STATUS_1)
     if status1 is not None:
         state.tank_ok = _bit(status1, STATUS_BIT_TANK_LEVEL_OK)
         state.ready = _bit(status1, STATUS_BIT_READY)
@@ -129,28 +130,32 @@ def parse_state(raw: dict) -> CubeState:
         # code, so power state is inferred from Ready until verified otherwise.
         state.power_on = state.ready
 
-    if REG_MACHINE_ALARM_STATUS_1 in regs:
-        state.alarm_bits = int(regs[REG_MACHINE_ALARM_STATUS_1])
+    if REG_MACHINE_ALARM_STATUS_1 in readonly_regs:
+        state.alarm_bits = int(readonly_regs[REG_MACHINE_ALARM_STATUS_1])
 
-    setup_flags = regs.get(REG_SETUP_FLAGS)
+    setup_flags = readwrite_regs.get(REG_SETUP_FLAGS)
     if setup_flags is not None:
         state.eco_mode_enabled = _bit(setup_flags, SETUP_BIT_ECO_ENABLED)
         state.steam_booster_enabled = _bit(setup_flags, SETUP_BIT_STEAM_BOOSTER_ENABLED)
         state.scheduler_enabled = _bit(setup_flags, SETUP_BIT_SCHEDULER_ENABLED)
 
-    state.coffees_today = regs.get(REG_DAY_COFFEE)
-    state.coffees_week = regs.get(REG_WEEK_COFFEE)
-    state.coffees_month = _u32(regs.get(REG_MONTH_COFFEE_LOW), regs.get(REG_MONTH_COFFEE_HIGH))
-    state.coffees_total = _u32(regs.get(REG_TOT_COFFEE_LOW), regs.get(REG_TOT_COFFEE_HIGH))
+    state.coffees_today = readonly_regs.get(REG_DAY_COFFEE)
+    state.coffees_week = readonly_regs.get(REG_WEEK_COFFEE)
+    state.coffees_month = _u32(
+        readonly_regs.get(REG_MONTH_COFFEE_LOW), readonly_regs.get(REG_MONTH_COFFEE_HIGH)
+    )
+    state.coffees_total = _u32(
+        readonly_regs.get(REG_TOT_COFFEE_LOW), readonly_regs.get(REG_TOT_COFFEE_HIGH)
+    )
     state.ml_erogated_total = _u32(
-        regs.get(REG_TOT_ML_EROGATED_LOW), regs.get(REG_TOT_ML_EROGATED_HIGH)
+        readonly_regs.get(REG_TOT_ML_EROGATED_LOW), readonly_regs.get(REG_TOT_ML_EROGATED_HIGH)
     )
     state.ml_loaded_boiler_total = _u32(
-        regs.get(REG_TOT_ML_LOADED_BOILER_LOW), regs.get(REG_TOT_ML_LOADED_BOILER_HIGH)
+        readonly_regs.get(REG_TOT_ML_LOADED_BOILER_LOW), readonly_regs.get(REG_TOT_ML_LOADED_BOILER_HIGH)
     )
-    state.ml_total = _u32(regs.get(REG_TOT_ML_LOW), regs.get(REG_TOT_ML_HIGH))
+    state.ml_total = _u32(readonly_regs.get(REG_TOT_ML_LOW), readonly_regs.get(REG_TOT_ML_HIGH))
 
-    day_mask = regs.get(REG_SCHEDULER_DAY_ENABLED_MASK)
+    day_mask = readwrite_regs.get(REG_SCHEDULER_DAY_ENABLED_MASK)
     if day_mask is not None:
         for i, name in enumerate(WEEKDAYS):
             state.scheduler_day_enabled[name] = _bit(day_mask, i)
@@ -159,8 +164,8 @@ def parse_state(raw: dict) -> CubeState:
     u = REG_SCHEDULER_TABLE_START
     per_day: dict[str, list[SchedulerSlot]] = {name: [] for name in WEEKDAYS}
     for i in range(SCHEDULER_SLOT_COUNT):
-        day_tag = regs.get(u)
-        time_reg = regs.get(u + 1)
+        day_tag = readwrite_regs.get(u)
+        time_reg = readwrite_regs.get(u + 1)
         u += 2
         day_index = i // 3
         # The panel's own UI order for these 21 slots is Monday-first (button 1..7);
