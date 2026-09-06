@@ -1,4 +1,4 @@
-"""Native calendar view and editor for a Sanremo Cube weekly schedule."""
+"""Native calendar view and editor for Sanremo Cube weekly on-time windows."""
 from __future__ import annotations
 
 from datetime import datetime, time, timedelta
@@ -24,7 +24,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 
 
 class CubeScheduleCalendar(CalendarEntity):
-    """Expose the Cube's seven-day, three-slot schedule as a native calendar."""
+    """Expose the Cube's three daily on-time windows as a native calendar."""
 
     _attr_has_entity_name = True
     _attr_name = "Sanremo Cube"
@@ -56,7 +56,7 @@ class CubeScheduleCalendar(CalendarEntity):
                 continue
             start = datetime.combine(date, time(slot.on_hour, slot.on_minute), tzinfo=tzinfo)
             end = datetime.combine(date, time(slot.off_hour, slot.off_minute), tzinfo=tzinfo)
-            events.append(CalendarEvent(start=start, end=end, summary="Sanremo Cube", uid=self._uid(day, slot.index), rrule=f"FREQ=WEEKLY;BYDAY={_BYDAY[date.weekday()]}"))
+            events.append(CalendarEvent(start=start, end=end, summary="Sanremo Cube – ON", description="Machine on at start, off at end.", uid=self._uid(day, slot.index), rrule=f"FREQ=WEEKLY;BYDAY={_BYDAY[date.weekday()]}"))
         return events
 
     @property
@@ -102,6 +102,8 @@ class CubeScheduleCalendar(CalendarEntity):
             index = slots.index(None)
         except ValueError as err:
             raise ValueError("A Cube supports at most three windows per day") from err
+        # A calendar window maps directly to Cube on/off time registers:
+        # start powers the machine on; end powers it off.
         slots[index] = SchedulerSlot(index, True, start.hour, start.minute, end.hour, end.minute)
         await self._save_day(day, slots)
         self.async_write_ha_state()

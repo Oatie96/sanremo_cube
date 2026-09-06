@@ -34,4 +34,6 @@ def test_calendar_expands_a_cube_slot_as_weekly_event() -> None:
     assert events[0].start.hour == 7
     assert events[0].end.hour == 8
     assert events[0].end.minute == 30
+    assert events[0].summary == "Sanremo Cube – ON"
+    assert events[0].description == "Machine on at start, off at end."
     assert events[0].rrule == "FREQ=WEEKLY;BYDAY=MO"
