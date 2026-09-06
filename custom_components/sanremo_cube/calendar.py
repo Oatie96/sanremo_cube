@@ -56,7 +56,7 @@ class CubeScheduleCalendar(CalendarEntity):
                 continue
             start = datetime.combine(date, time(slot.on_hour, slot.on_minute), tzinfo=tzinfo)
             end = datetime.combine(date, time(slot.off_hour, slot.off_minute), tzinfo=tzinfo)
-            events.append(CalendarEvent(start=start, end=end, summary="Sanremo Cube", uid=self._uid(day, slot.index), rrule=f"FREQ=WEEKLY;BYDAY={_BYDAY[date.weekday()]}"))
+            events.append(CalendarEvent(start=start, end=end, summary="Sanremo Cube – ON", description="Machine on at start, off at end.", uid=self._uid(day, slot.index), rrule=f"FREQ=WEEKLY;BYDAY={_BYDAY[date.weekday()]}"))
         return events
 
     @property
