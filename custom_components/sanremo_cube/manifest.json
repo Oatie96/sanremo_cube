@@ -4,8 +4,8 @@
   "codeowners": ["@Oatie96"],
   "config_flow": true,
   "documentation": "https://github.com/Oatie96/sanremo_cube",
-  "issue_tracker": "https://github.com/Oatie96/sanremo_cube/issues",
   "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/Oatie96/sanremo_cube/issues",
   "requirements": ["async-timeout>=4.0.0"],
   "version": "0.1.1"
 }

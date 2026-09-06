@@ -1,76 +1,101 @@
 # Sanremo Cube — Home Assistant integration
 
-A native Home Assistant custom integration for the **Sanremo Cube** espresso
-machine controller (Net Software Srl), built by reverse-engineering the
-machine's own local web panel (`cube.html` / `cube.js`). No cloud account,
-no bridge — it talks straight to the machine over your LAN.
+[![HACS](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
+[![Validate](https://github.com/Oatie96/sanremo_cube/actions/workflows/validate.yml/badge.svg)](https://github.com/Oatie96/sanremo_cube/actions/workflows/validate.yml)
+[![Test](https://github.com/Oatie96/sanremo_cube/actions/workflows/test.yml/badge.svg)](https://github.com/Oatie96/sanremo_cube/actions/workflows/test.yml)
 
-## What you get
+A native [Home Assistant](https://www.home-assistant.io/) custom integration for the **Sanremo Cube** espresso machine. It communicates directly with the machine's local web panel over your LAN; no cloud account, bridge or custom dashboard widget is required.
 
-- **Device page** for the machine (Settings → Devices & Services)
-- **Switches**: power, eco mode, steam booster, scheduler on/off, and one
-  switch per weekday to enable/disable that day's programming
-- **Numbers**: boiler setpoint, eco boiler setpoint, eco-mode timer
-- **Sensors**: boiler temperature, shot time, filter days remaining,
-  coffees today/week/month/total, total water erogated
-- **Binary sensors**: ready, tank empty, steam booster heating, alarm
-  active, filter-change needed, boiler fault
-- **Service** `sanremo_cube.set_schedule` — write up to three on/off windows
-  for one weekday, with an option to copy the same windows onto other days
-  in one call (mirrors the panel's own "copy to days")
+## Features
 
-## Install (HACS custom repository)
+- **Power control** — turn the machine on or put it into standby
+- **Machine status** — boiler temperature, readiness, tank/filter/boiler alerts and shot time
+- **Settings** — boiler setpoint, eco boiler setpoint and eco-mode timer
+- **Counters** — coffee totals for today, week, month and lifetime, plus dispensed water
+- **Scheduler control** — enable the weekly schedule and individual weekdays
+- **Native weekly calendar** — create, edit and delete the Cube's scheduled on-time windows in Home Assistant's standard calendar UI
 
-1. Push this folder to your own GitHub repo, e.g. `ha-sanremo-cube`.
-2. In Home Assistant: HACS → the ⋮ menu → **Custom repositories** → add
-   your repo URL, category **Integration**.
-3. Install "Sanremo Cube" from HACS, restart Home Assistant.
-4. Settings → Devices & Services → **Add Integration** → search
-   "Sanremo Cube" → enter the machine's IP address.
-5. Leave the PIN field empty unless your panel is configured to require a
-   login PIN — plenty of Cube panels on a trusted home LAN have none, and
-   this integration works without it in that case.
+### Weekly schedule calendar
 
-If you'd rather skip HACS: copy `custom_components/sanremo_cube` straight
-into your `<config>/custom_components/` folder and restart.
+The integration creates a calendar entity named **Sanremo Cube**. A calendar event maps directly to a Cube on-time window:
 
-## Notes and caveats — please read
+```text
+Event start → machine turns on
+Event end   → machine turns off
+```
 
-This was built entirely from the machine's own client-side JavaScript, not
-from official documentation (Sanremo doesn't publish one for this local
-API), and verified live against one machine only as far as: reading state,
-and turning the machine on from standby. Everything else — every sensor,
-the setpoints, and the scheduler write path — follows the same code paths
-the panel itself uses, but hasn't all been individually exercised. A few
-specific things worth knowing before you lean on this for anything
-time-critical:
+The Cube supports up to **three windows per weekday**. The integration validates these machine limits before saving:
 
-- **No dedicated "standby" bit was found** in the reversed read-side code,
-  so the `power` switch's on/off *state* is inferred from a `Ready` status
-  bit rather than a confirmed standby flag. Turning it on/off (writing)
-  uses the same calls confirmed working from the panel.
-- **Scheduler day ordering**: the weekly on/off toggle (`reqCode 250`) is
-  confirmed to use plain `Date.getDay()` numbering (0=Sunday..6=Saturday).
-  The per-slot day index used when *saving* time windows (`reqCode 253`)
-  is inferred to follow the panel's own Monday-first day-button order —
-  worth a one-off sanity check against your panel before scripting all
-  seven days unattended.
-- **Auth**: this integration sends empty `key`/`mac` fields and skips
-  login entirely unless you set a PIN, matching what worked live against
-  a panel with no login configured. If your machine does require a PIN,
-  set it in the config flow — the integration will call the login command
-  before every poll if it isn't already logged in.
-- Traffic to the machine is **plain HTTP, unencrypted, on your LAN** —
-  same as the panel itself. Don't expose the machine's IP outside your
-  home network.
+- up to three windows on a single weekday;
+- 15-minute time increments;
+- start and end on the same day; and
+- an end time later than its start time.
 
-If any entity ends up reading `unknown` or a setpoint doesn't take, the
-most likely cause is a register mapping that doesn't quite match your
-machine's firmware revision — open an issue (or just tell Claude) with
-what you're seeing and it's a quick fix in `coordinator.py` / `const.py`.
+The calendar is standard Home Assistant functionality. Add it through the normal dashboard editor if you want it on a dashboard; this integration intentionally does **not** install a custom Lovelace widget.
 
-## Full API reference
+## Installation
 
-The complete `reqCode` / register map this integration is built on is
-documented separately: see the Cube API Reference page from this
-conversation (or `const.py`, which mirrors it 1:1).
+### HACS custom repository
+
+1. Open **HACS** in Home Assistant.
+2. Open the ⋮ menu → **Custom repositories**.
+3. Add `https://github.com/Oatie96/sanremo_cube` with category **Integration**.
+4. Search for **Sanremo Cube** and install it.
+5. Restart Home Assistant.
+6. Go to **Settings → Devices & services → Add integration**.
+7. Search for **Sanremo Cube** and enter the local hostname or IP address of the machine.
+8. Enter a PIN only when the machine's own web panel requires one.
+
+### Manual installation
+
+Copy `custom_components/sanremo_cube` into `<config>/custom_components/`, restart Home Assistant, then add the integration through **Settings → Devices & services**.
+
+## Entities
+
+| Type | Provided functionality |
+|---|---|
+| Switches | Power, eco mode, steam booster, scheduler and individual scheduler weekdays |
+| Numbers | Boiler setpoint, eco boiler setpoint and eco-mode timer |
+| Sensors | Boiler temperature, shot time, filter days remaining, coffee counters and water total |
+| Binary sensors | Ready, tank empty, steam-booster heating, alarm active, filter change needed and boiler fault |
+| Calendar | `Sanremo Cube` weekly schedule calendar |
+
+The `sanremo_cube.set_schedule` service remains available for automations or bulk changes. It writes up to three on/off windows for one weekday and can copy them to additional weekdays.
+
+## Connectivity and security
+
+The Cube web panel uses **unencrypted HTTP on the local network**. This integration follows the same local protocol.
+
+- Keep the Cube on a trusted home LAN.
+- Do not expose the machine's web panel or Home Assistant directly to the internet.
+- Use a PIN in the Cube panel when available.
+- The integration does not collect or send machine data to a cloud service.
+
+## Protocol and compatibility
+
+Sanremo does not publish an official API for the Cube web panel. This integration is based on the panel's local protocol and uses form-encoded requests to `/ajax/post`. It is maintained against observed Cube firmware behaviour and includes regression tests for the transport protocol, scheduler slot handling and calendar validation.
+
+Machine firmware may differ. If an entity shows unexpected data or a control does not work, please open an issue with:
+
+- Cube firmware version;
+- the affected Home Assistant entity; and
+- a description of the observed behaviour.
+
+Never include your PIN, access tokens, private IP address or raw panel response in a public issue.
+
+## Development checks
+
+Before submitting a pull request, run:
+
+```bash
+python -m pytest tests -q
+python -m compileall -q custom_components
+python -m json.tool custom_components/sanremo_cube/manifest.json >/dev/null
+git diff --check
+```
+
+GitHub Actions runs HACS validation, Home Assistant hassfest and the test suite for pushes and pull requests.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE). It is provided **as is**, without warranty.
