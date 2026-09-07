@@ -16,7 +16,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN
-from .coordinator import CubeDataUpdateCoordinator, CubeState
+from .coordinator import CubeDataUpdateCoordinator, CubeState, estimate_minutes_to_ready
 from .entity import CubeEntity
 
 
@@ -40,6 +40,14 @@ SENSORS: tuple[CubeSensorDescription, ...] = (
         device_class=SensorDeviceClass.TEMPERATURE,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         value_fn=lambda s: s.boiler_setpoint,
+    ),
+    CubeSensorDescription(
+        key="estimated_time_to_ready",
+        translation_key="estimated_time_to_ready",
+        device_class=SensorDeviceClass.DURATION,
+        native_unit_of_measurement=UnitOfTime.MINUTES,
+        icon="mdi:timer-sand",
+        value_fn=estimate_minutes_to_ready,
     ),
     CubeSensorDescription(
         key="shot_time",

@@ -4,6 +4,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from datetime import timedelta
+from math import ceil
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -94,6 +95,30 @@ class CubeState:
 
     scheduler_day_enabled: dict[str, bool] = field(default_factory=dict)
     scheduler_slots: dict[str, list[SchedulerSlot | None]] = field(default_factory=dict)
+
+
+# Conservative estimate based on two observed cold-start runs. The Cube itself
+# owns the Ready bit, so this is a planning aid and never replaces it.
+_READY_HEATING_RATE_C_PER_MINUTE = 15.0
+_READY_STABILIZATION_MINUTES = 15
+
+
+def estimate_minutes_to_ready(state: CubeState) -> int | None:
+    """Estimate the remaining warm-up time without overriding Cube readiness.
+
+    The boiler reaches its setpoint quickly, then the Cube waits for an
+    additional stabilization phase before asserting its firmware Ready bit.
+    The estimate intentionally errs high and is unavailable while powered off
+    or when the required live measurements are absent.
+    """
+    if not state.power_on or state.boiler_temperature is None or state.boiler_setpoint is None:
+        return None
+    if state.ready:
+        return 0
+
+    degrees_remaining = max(0.0, state.boiler_setpoint - state.boiler_temperature)
+    heating_minutes = degrees_remaining / _READY_HEATING_RATE_C_PER_MINUTE
+    return ceil(heating_minutes + _READY_STABILIZATION_MINUTES)
 
 
 def _bit(value: int, position: int) -> bool:
