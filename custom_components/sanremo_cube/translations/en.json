@@ -27,6 +27,7 @@
     "sensor": {
       "boiler_temperature": { "name": "Boiler temperature" },
       "boiler_setpoint": { "name": "Boiler setpoint" },
+      "estimated_time_to_ready": { "name": "Estimated time to ready" },
       "shot_time": { "name": "Shot time" },
       "filter_days_remaining": { "name": "Filter days remaining" },
       "coffees_today": { "name": "Coffees today" },

@@ -9,11 +9,17 @@ A native [Home Assistant](https://www.home-assistant.io/) custom integration for
 ## Features
 
 - **Power control** — turn the machine on or put it into standby
-- **Machine status** — boiler temperature, readiness, tank/filter/boiler alerts and shot time
+- **Machine status** — boiler temperature, readiness, a conservative estimated time to ready, tank/filter/boiler alerts and shot time
 - **Settings** — boiler setpoint, eco boiler setpoint and eco-mode timer
 - **Counters** — coffee totals for today, week, month and lifetime, plus dispensed water
 - **Scheduler control** — enable the weekly schedule and individual weekdays
 - **Native weekly calendar** — create, edit and delete the Cube's scheduled on-time windows in Home Assistant's standard calendar UI
+
+### Estimated time to ready
+
+The read-only **Estimated time to ready** sensor is a conservative planning aid. It is calculated from the current boiler temperature, the configured boiler setpoint, and observed Cube warm-up behaviour. It reports minutes remaining while the machine is warming, `0 min` after the Cube itself reports **Ready**, and is unavailable while the machine is in standby.
+
+The Cube's firmware owns the actual **Ready** state. The estimate never changes machine behaviour and may vary with the machine's starting temperature and thermal conditions; use the **Ready** binary sensor as the final confirmation before brewing.
 
 ### Weekly schedule calendar
 

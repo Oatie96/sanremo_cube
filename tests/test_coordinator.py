@@ -1,7 +1,11 @@
 """Regression coverage for distinct Sanremo Cube read-only/writeable register blocks."""
 from __future__ import annotations
 
-from custom_components.sanremo_cube.coordinator import parse_state
+from custom_components.sanremo_cube.coordinator import (
+    CubeState,
+    estimate_minutes_to_ready,
+    parse_state,
+)
 
 
 def test_parse_state_reads_each_value_from_its_confirmed_register_block() -> None:
@@ -67,3 +71,22 @@ def test_parse_state_preserves_physical_scheduler_slot_positions() -> None:
     assert monday[0].off_hour == 8
     assert monday[1] is None
     assert monday[2].index == 2
+
+
+def test_estimate_minutes_to_ready_is_conservative_and_needs_confirmed_inputs() -> None:
+    """Use the measured cold-start curve without claiming an exact firmware ETA."""
+    assert estimate_minutes_to_ready(
+        CubeState(power_on=True, ready=False, boiler_temperature=24, boiler_setpoint=125)
+    ) == 22
+    assert estimate_minutes_to_ready(
+        CubeState(power_on=True, ready=False, boiler_temperature=35, boiler_setpoint=125)
+    ) == 21
+    assert estimate_minutes_to_ready(
+        CubeState(power_on=True, ready=True, boiler_temperature=125, boiler_setpoint=125)
+    ) == 0
+    assert estimate_minutes_to_ready(
+        CubeState(power_on=False, ready=False, boiler_temperature=24, boiler_setpoint=125)
+    ) is None
+    assert estimate_minutes_to_ready(
+        CubeState(power_on=True, ready=False, boiler_temperature=None, boiler_setpoint=125)
+    ) is None
