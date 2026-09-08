@@ -17,6 +17,8 @@ from .coordinator import CubeDataUpdateCoordinator, SchedulerSlot
 
 _DAY_NAMES = ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
 _BYDAY = ("MO", "TU", "WE", "TH", "FR", "SA", "SU")
+# The Cube scheduler endpoint uses JavaScript Date.getDay numbering.
+_CUBE_DAY_INDEX = {"sunday": 0, "monday": 1, "tuesday": 2, "wednesday": 3, "thursday": 4, "friday": 5, "saturday": 6}
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
@@ -85,15 +87,26 @@ class CubeScheduleCalendar(CalendarEntity):
                 return None
             return (True, slot.on_hour, slot.on_minute, slot.off_hour, slot.off_minute)
         await self.coordinator.client.async_save_scheduler_day(
-            day=(day, "monday", "tuesday", "wednesday", "thursday", "friday", "saturday").index(day),
+            day=_CUBE_DAY_INDEX[day],
             slot1=as_payload(slots[0]), slot2=as_payload(slots[1]), slot3=as_payload(slots[2]),
         )
         await self.coordinator.async_request_refresh()
 
-    async def async_create_event(self, **kwargs) -> None:
-        start, end = kwargs["start"], kwargs["end"]
+    @staticmethod
+    def _event_bounds(event: dict) -> tuple[datetime, datetime]:
+        """Normalize Home Assistant calendar transport date-time field names."""
+        start = (
+            event.get("start")
+            or event.get("dtstart")
+            or event.get("start_date_time")
+        )
+        end = event.get("end") or event.get("dtend") or event.get("end_date_time")
         if not isinstance(start, datetime) or not isinstance(end, datetime):
             raise ValueError("Cube schedules require start and end times")
+        return start, end
+
+    async def async_create_event(self, **kwargs) -> None:
+        start, end = self._event_bounds(kwargs)
         if start.date() != end.date() or end <= start or start.minute % 15 or end.minute % 15:
             raise ValueError("Use same-day 15-minute time windows")
         day = _DAY_NAMES[start.weekday()]
@@ -118,5 +131,23 @@ class CubeScheduleCalendar(CalendarEntity):
         self.async_write_ha_state()
 
     async def async_update_event(self, uid: str, event: dict, recurrence_id=None, recurrence_range=None) -> None:
-        await self.async_delete_event(uid, recurrence_id, recurrence_range)
-        await self.async_create_event(**event)
+        """Update the same physical Cube slot without a delete/create gap."""
+        entry_id, day, raw_index = uid.split(":")
+        if entry_id != self.coordinator.entry.entry_id or day not in _DAY_NAMES:
+            raise ValueError("Unknown Cube schedule event")
+        start, end = self._event_bounds(event)
+        if (
+            _DAY_NAMES[start.weekday()] != day
+            or start.date() != end.date()
+            or end <= start
+            or start.minute % 15
+            or end.minute % 15
+        ):
+            raise ValueError("Use same-day 15-minute time windows on the original weekday")
+        index = int(raw_index)
+        slots = list(self.coordinator.data.scheduler_slots.get(day, [None] * 3))
+        if index not in range(len(slots)) or slots[index] is None:
+            raise ValueError("Unknown Cube schedule event")
+        slots[index] = SchedulerSlot(index, True, start.hour, start.minute, end.hour, end.minute)
+        await self._save_day(day, slots)
+        self.async_write_ha_state()
