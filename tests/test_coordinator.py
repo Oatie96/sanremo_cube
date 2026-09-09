@@ -73,6 +73,20 @@ def test_parse_state_preserves_physical_scheduler_slot_positions() -> None:
     assert monday[2].index == 2
 
 
+def test_parse_state_discards_zero_length_scheduler_placeholders() -> None:
+    """An empty 00:00–00:00 placeholder is not a valid ON window."""
+    state = parse_state(
+        {
+            "readwrite_registers": {
+                18: 3,
+                19: 0,
+            }
+        }
+    )
+
+    assert state.scheduler_slots["monday"][0] is None
+
+
 def test_estimate_minutes_to_ready_is_conservative_and_needs_confirmed_inputs() -> None:
     """Use the measured cold-start curve without claiming an exact firmware ETA."""
     assert estimate_minutes_to_ready(
