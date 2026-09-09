@@ -204,9 +204,14 @@ class CubeClient:
         copy_to = copy_to or []
 
         def slot_fields(prefix: str, slot: tuple[bool, int, int, int, int] | None) -> dict:
+            # The Cube does not use a boolean here: en1/en2/en3 carry the
+            # vendor weekday code (Sunday=0 … Saturday=6); 7 means no slot.
+            # Sending 0 for an empty slot creates an unintended midnight
+            # Sunday window, and sending 1 for every active slot routes them
+            # to Monday regardless of the day being saved.
             if slot is None:
                 return {
-                    f"en{prefix}": 0,
+                    f"en{prefix}": 7,
                     f"on{prefix}H": 0,
                     f"on{prefix}M": 0,
                     f"off{prefix}H": 0,
@@ -214,7 +219,7 @@ class CubeClient:
                 }
             en, on_h, on_m, off_h, off_m = slot
             return {
-                f"en{prefix}": 1 if en else 0,
+                f"en{prefix}": day if en else 7,
                 f"on{prefix}H": on_h,
                 f"on{prefix}M": on_m,
                 f"off{prefix}H": off_h,

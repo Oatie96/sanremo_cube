@@ -51,6 +51,7 @@ class RecordingSession:
             "150": {"key": 150, "registers": [[0, 1]]},
             "151": {"key": 151, "registers": [[0, 122], [12, 115]]},
             "152": {"key": 152, "registers": [[0, 1250], [12, 0]]},
+            "253": {"result": True},
         }
         return _Response(responses[key])
 
@@ -74,3 +75,45 @@ def test_state_poll_uses_live_form_endpoint_and_keys() -> None:
     ]
     assert raw["readonly_registers"] == {0: 122, 12: 115}
     assert raw["readwrite_registers"] == {0: 1250, 12: 0}
+
+
+def test_scheduler_save_uses_vendor_day_codes_and_disabled_sentinel() -> None:
+    """The panel sends the weekday code per active slot and 7 for an empty slot."""
+    session = RecordingSession()
+    client = CubeClient(cast(aiohttp.ClientSession, session), "cube.local")
+
+    asyncio.run(
+        client.async_save_scheduler_day(
+            day=3,
+            slot1=(True, 6, 30, 8, 30),
+            slot2=None,
+            slot3=None,
+        )
+    )
+
+    assert session.calls[-1][1]["data"] == {
+        "key": "253",
+        "day": 3,
+        "en1": 3,
+        "on1H": 6,
+        "on1M": 30,
+        "off1H": 8,
+        "off1M": 30,
+        "en2": 7,
+        "on2H": 0,
+        "on2M": 0,
+        "off2H": 0,
+        "off2M": 0,
+        "en3": 7,
+        "on3H": 0,
+        "on3M": 0,
+        "off3H": 0,
+        "off3M": 0,
+        "copyMon": 0,
+        "copyTue": 0,
+        "copyWed": 0,
+        "copyThu": 0,
+        "copyFri": 0,
+        "copySat": 0,
+        "copySun": 0,
+    }

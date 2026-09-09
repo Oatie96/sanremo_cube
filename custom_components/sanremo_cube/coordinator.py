@@ -206,6 +206,11 @@ def parse_state(raw: dict) -> CubeState:
             continue  # 7 is the "no slot" sentinel used by the panel
         time_on = (time_reg >> 8) & 255
         time_off = time_reg & 255
+        # Calendar writes reject zero-length windows. Treat a persisted
+        # 00:00–00:00 record as a stale disabled placeholder rather than a
+        # real all-day schedule that could keep the Cube awake.
+        if time_on == time_off:
+            continue
         per_day[weekday_name][slot_index] = SchedulerSlot(
             index=slot_index,
             enabled=True,
