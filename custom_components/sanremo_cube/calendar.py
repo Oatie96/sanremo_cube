@@ -17,8 +17,18 @@ from .coordinator import CubeDataUpdateCoordinator, SchedulerSlot
 
 _DAY_NAMES = ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
 _BYDAY = ("MO", "TU", "WE", "TH", "FR", "SA", "SU")
-# The Cube scheduler endpoint uses JavaScript Date.getDay numbering.
-_CUBE_DAY_INDEX = {"sunday": 0, "monday": 1, "tuesday": 2, "wednesday": 3, "thursday": 4, "friday": 5, "saturday": 6}
+# The Cube's scheduler-save endpoint uses Monday-first editor indexes for its
+# `day` parameter. Its per-slot `enN` codes use a different Sunday-first
+# numbering; CubeClient translates those codes internally.
+_SCHEDULER_EDITOR_DAY_INDEX = {
+    "monday": 0,
+    "tuesday": 1,
+    "wednesday": 2,
+    "thursday": 3,
+    "friday": 4,
+    "saturday": 5,
+    "sunday": 6,
+}
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
@@ -87,7 +97,7 @@ class CubeScheduleCalendar(CalendarEntity):
                 return None
             return (True, slot.on_hour, slot.on_minute, slot.off_hour, slot.off_minute)
         await self.coordinator.client.async_save_scheduler_day(
-            day=_CUBE_DAY_INDEX[day],
+            day=_SCHEDULER_EDITOR_DAY_INDEX[day],
             slot1=as_payload(slots[0]), slot2=as_payload(slots[1]), slot3=as_payload(slots[2]),
         )
         await self.coordinator.async_request_refresh()

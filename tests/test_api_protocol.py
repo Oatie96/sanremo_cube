@@ -84,7 +84,7 @@ def test_scheduler_save_uses_vendor_day_codes_and_disabled_sentinel() -> None:
 
     asyncio.run(
         client.async_save_scheduler_day(
-            day=3,
+            day=2,
             slot1=(True, 6, 30, 8, 30),
             slot2=None,
             slot3=None,
@@ -93,7 +93,7 @@ def test_scheduler_save_uses_vendor_day_codes_and_disabled_sentinel() -> None:
 
     assert session.calls[-1][1]["data"] == {
         "key": "253",
-        "day": 3,
+        "day": 2,
         "en1": 3,
         "on1H": 6,
         "on1M": 30,

@@ -203,6 +203,10 @@ class CubeClient:
         await self.async_ensure_login()
         copy_to = copy_to or []
 
+        # `day` is the panel's editor index (Monday=0 … Sunday=6), while
+        # en1/en2/en3 carry the Cube weekday code (Sunday=0 … Saturday=6).
+        cube_day = (day + 1) % 7
+
         def slot_fields(prefix: str, slot: tuple[bool, int, int, int, int] | None) -> dict:
             # The Cube does not use a boolean here: en1/en2/en3 carry the
             # vendor weekday code (Sunday=0 … Saturday=6); 7 means no slot.
@@ -219,7 +223,7 @@ class CubeClient:
                 }
             en, on_h, on_m, off_h, off_m = slot
             return {
-                f"en{prefix}": day if en else 7,
+                f"en{prefix}": cube_day if en else 7,
                 f"on{prefix}H": on_h,
                 f"on{prefix}M": on_m,
                 f"off{prefix}H": off_h,

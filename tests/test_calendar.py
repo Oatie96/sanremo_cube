@@ -79,7 +79,7 @@ def test_calendar_create_accepts_home_assistant_service_datetime_keys() -> None:
         )
     )
 
-    assert coordinator.client.saved_days == [(2, (True, 6, 30, 8, 30), None, None)]
+    assert coordinator.client.saved_days == [(1, (True, 6, 30, 8, 30), None, None)]
 
 
 def test_calendar_update_accepts_websocket_dtstart_dtend_event_schema() -> None:
@@ -96,5 +96,5 @@ def test_calendar_update_accepts_websocket_dtstart_dtend_event_schema() -> None:
     )
 
     assert coordinator.client.saved_days == [
-        (1, (True, 6, 30, 8, 30), None, None),
+        (0, (True, 6, 30, 8, 30), None, None),
     ]
